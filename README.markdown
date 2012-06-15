@@ -13,6 +13,5 @@ presents the users local time.
     start = dateTime.localStart().toString()
     end   = dateTime.localEnd().toString()
 
-    "<span class='date-time' data-start='#{start}'
-data-end='#{end}'>#{dateTime.text}</span>"
+    "<span class='date-time' data-start='#{start}' data-end='#{end}'>#{dateTime.text}</span>"
 ```
