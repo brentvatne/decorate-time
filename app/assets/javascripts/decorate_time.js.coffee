@@ -49,6 +49,12 @@ DecorateTime =
     year:  @findYear(split)
     start: @findStartHour(split)
     end:   @findEndHour(split)
+    localStart: ->
+      new Date("#{@month} #{@day} #{@year} #{@start} UTC")
+    localEnd: ->
+      return null if @end is null
+      new Date("#{@month} #{@day} #{@year} #{@end} UTC")
+
 
   # If the first one matches a short or long month, it means that the order
   # was 19 June, so we use that first value. Otherwise, it was June 19,
