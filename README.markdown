@@ -15,3 +15,5 @@ presents the users local time.
 
     "<span class='date-time' data-start='#{start}' data-end='#{end}'>#{dateTime.text}</span>"
 ```
+
+To run the specs, just do `rails s` and navigate to http://localhost:3000/jasmin
