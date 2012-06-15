@@ -10,6 +10,15 @@ DecorateTime =
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ]
 
+  eachIn: (elements, callback) ->
+    for element in elements
+      elementHtml = $(element).html()
+
+      for dateTime in @findDateTimeExpressions(elementHtml)
+        newText = callback(dateTime)
+        newHtml = elementHtml.replace(dateTime.text, newText)
+        $(element).html(newHtml)
+
   # Matches strings such as:
   #
   # 19 June from 20:00 - 21:00 UTC

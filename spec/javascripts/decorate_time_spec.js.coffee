@@ -59,3 +59,37 @@ describe 'DecorateTime', ->
         result = DecorateTime.findDateTimeExpressions(rangeSample)
 
         expect(result[0].end).toEqual('21:00')
+
+  describe 'eachIn', ->
+    beforeEach ->
+      $('#testArea').empty()
+      $('body').append(
+        '<div style="display: none" id="testArea">'
+      )
+      $('#testArea').append(
+        '<p>Hello there June 19 from 20:00 - 21:00 UTC</p>'
+      )
+      $('#testArea').append(
+        '<p>August 3rd at 22:00 UTC is the first thing here.</p>'
+      )
+
+    it 'replaces the text with the value in the callback', ->
+      DecorateTime.eachIn($('#testArea p'), (dateTime) ->
+        "BRENT VATNE"
+      )
+
+      firstP = $('#testArea p').first().html()
+      lastP  = $('#testArea p').last().html()
+
+      expect(firstP.match(/BRENT VATNE/)).toBeTruthy()
+      expect(lastP.match(/BRENT VATNE/)).toBeTruthy()
+
+    it 'works like it says in the README', ->
+      DecorateTime.eachIn $('p'), (dateTime) ->
+        start = dateTime.localStart().toString()
+        end   = (dateTime.localEnd() || "").toString()
+
+        "<span class='date-time' data-start='#{start}' data-end='#{end}'>#{dateTime.text}</span>"
+
+      paragraph = $('#testArea p').first().html()
+      expect(paragraph.match('data-start="Tue Jun 19 2012')).toBeTruthy()
