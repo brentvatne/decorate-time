@@ -19,11 +19,10 @@ DecorateTime =
       (#{months}|#{monthsShort}|\d+)
       (.*?)
       (UTC)
-    ///gm
+    ///g
 
   findDateTimeExpressions: (text) ->
-    @dateTimeRegExp().exec(text)
-
+    text.match(@dateTimeRegExp())
 
     #for token in text.split(" ")
     #  if token in @months or token in @monthsShort

@@ -28,6 +28,5 @@ describe 'DecorateTime', ->
 
     it 'it detects date time strings in large blocks of text', ->
       result = DecorateTime.findDateTimeExpressions(paragraph)
-      console.log result
-      expect(result).toBeTruthy()
+      expect(result.length).toEqual(2)
 
