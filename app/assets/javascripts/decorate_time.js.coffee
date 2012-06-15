@@ -10,7 +10,8 @@ DecorateTime =
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ]
 
-  # 
+  # Finds each UTC date in the given elements and replaces it with the value 
+  # returned from callback(the date time object)
   eachIn: (elements, callback) ->
     for element in elements
       element   = $(element)
@@ -20,11 +21,20 @@ DecorateTime =
         currentHtml = element.html()
         newText     = callback(dateTime)
 
-        unless currentHtml.indexOf(newText) > 0
+        unless @alreadyReplaced(currentHtml, newText)
           newHtml = currentHtml.replace(
             ///#{dateTime.text}///g, newText
           )
           element.html(newHtml)
+
+  # Determines if the html already contains the given text
+  #
+  # This is used to get over the edge case of one element
+  # containing the same date more than one.
+  #
+  # Returns true if it does contain it, false if not.
+  alreadyReplaced: (html, text) ->
+    html.indexOf(text) > 0
 
   # Matches strings such as:
   #
