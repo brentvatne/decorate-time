@@ -44,15 +44,15 @@ DecorateTime =
   #
   # Must contain UTC at the end of the string to match.
   dateTimeRegExp: ->
-    months      = @monthsLong.join("|")
+    monthsLong  = @monthsLong.join("|")
     monthsShort = @monthsShort.join("|")
 
     ///
-      (#{months}|#{monthsShort}|\d+)  # It's either June 19
-      \s+                             # or 19 June, and this
-      (#{months}|#{monthsShort}|\d+)  # handles both cases.
-      (.*?)                           # Any non-greedy match
-      (UTC)                           # Until UTC is found
+      (#{monthsLong}|#{monthsShort}|\d+)  # It's either June 19
+      \s+                                 # or 19 June, and this
+      (#{monthsLong}|#{monthsShort}|\d+)  # handles both cases.
+      (.*?)                               # Any non-greedy match
+      (UTC)                               # Until UTC is found
     ///ig
 
   # Searches a block of text (eg: a paragraph) for any suitable date time
