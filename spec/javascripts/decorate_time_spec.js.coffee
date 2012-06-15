@@ -6,19 +6,25 @@ describe 'DecorateTime', ->
       result = DecorateTime.findDateTimeExpressions(
         'June 19 from 20:00 - 21:00 UTC'
       )
-      expect(result).toBeTruthy()
+      expect(result.length).toEqual(1)
 
     it 'finds expressions beginning with a day', ->
       result = DecorateTime.findDateTimeExpressions(
         '19 June from 20:00 - 21:00 UTC'
       )
-      expect(result).toBeTruthy()
+      expect(result.length).toEqual(1)
 
     it 'does not find expressions without UTC', ->
       result = DecorateTime.findDateTimeExpressions(
         '19 June from 20:00 - 21:00'
       )
       expect(result).toEqual([])
+
+    it 'ignores case', ->
+      result = DecorateTime.findDateTimeExpressions(
+        '19 june at 20:00 UTC'
+      )
+      expect(result.length).toEqual(1)
 
     it 'it detects date time strings in large blocks of text', ->
       paragraph = """
@@ -67,10 +73,17 @@ describe 'DecorateTime', ->
         '<div style="display: none" id="testArea">'
       )
       $('#testArea').append(
-        '<p>Hello there June 19 from 20:00 - 21:00 UTC</p>'
+        """
+        <p>Hello there June 19 from 20:00 - 21:00 UTC.
+        Again, it is June 19 from 20:00 - 21:00 UTC.
+        Please, June 19 from 20:00 - 21:00 UTC!</p>
+        """
       )
       $('#testArea').append(
-        '<p>August 3rd at 22:00 UTC is the first thing here.</p>'
+        """
+        <p>August 3rd at 22:00 UTC is the first thing here.
+        Also, consider June 19 from 20:00 - 21:00 UTC</p>
+        """
       )
 
     it 'replaces the text with the value in the callback', ->
@@ -84,12 +97,26 @@ describe 'DecorateTime', ->
       expect(firstP.match(/BRENT VATNE/)).toBeTruthy()
       expect(lastP.match(/BRENT VATNE/)).toBeTruthy()
 
-    it 'works like it says in the README', ->
-      DecorateTime.eachIn $('p'), (dateTime) ->
-        start = dateTime.localStart().toString()
-        end   = (dateTime.localEnd() || "").toString()
+    describe 'like in the README', ->
+      beforeEach ->
+        DecorateTime.eachIn $('p'), (dateTime) ->
+          start = dateTime.localStart().toString()
+          end   = (dateTime.localEnd() || "").toString()
 
-        "<span class='date-time' data-start='#{start}' data-end='#{end}'>#{dateTime.text}</span>"
+          "<span>#{dateTime.text}</span>"
 
-      paragraph = $('#testArea p').first().html()
-      expect(paragraph.match('data-start="Tue Jun 19 2012')).toBeTruthy()
+      it 'works like it says in the README', ->
+        paragraph = $('#testArea p').first().html()
+        expect(paragraph.match('span')).toBeTruthy()
+
+      it 'replaces multiple occurrences in a single element', ->
+        paragraph = $('#testArea p').first().html()
+        expect(paragraph.match(/<span>June 19.*?<\/span>/g).length).toEqual(3)
+
+      it 'does not apply the function to an element more than once', ->
+        paragraph = $('#testArea p').first().html()
+        expect(paragraph.match(/<span><span>/g)).toBeFalsy()
+
+      it 'replaces multiple occurrences of the same date time in the single element', ->
+        paragraph = $('#testArea p').last().html()
+        expect(paragraph.match(/<span>.*?<\/span>/g).length).toEqual(2)

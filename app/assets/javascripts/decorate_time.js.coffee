@@ -10,14 +10,21 @@ DecorateTime =
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ]
 
+  # 
   eachIn: (elements, callback) ->
     for element in elements
-      elementHtml = $(element).html()
+      element   = $(element)
+      dateTimes = @findDateTimeExpressions(element.html())
 
-      for dateTime in @findDateTimeExpressions(elementHtml)
-        newText = callback(dateTime)
-        newHtml = elementHtml.replace(dateTime.text, newText)
-        $(element).html(newHtml)
+      for dateTime in dateTimes
+        currentHtml = element.html()
+        newText     = callback(dateTime)
+
+        unless currentHtml.indexOf(newText) > 0
+          newHtml = currentHtml.replace(
+            ///#{dateTime.text}///g, newText
+          )
+          element.html(newHtml)
 
   # Matches strings such as:
   #
@@ -36,7 +43,7 @@ DecorateTime =
       (#{months}|#{monthsShort}|\d+)  # handles both cases.
       (.*?)                           # Any non-greedy match
       (UTC)                           # Until UTC is found
-    ///g
+    ///ig
 
   # Searches a block of text (eg: a paragraph) for any suitable date time
   # strings. It then returns an Array of objects containing the parsed
