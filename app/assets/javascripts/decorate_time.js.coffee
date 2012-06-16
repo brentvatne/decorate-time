@@ -70,7 +70,6 @@ DecorateTime =
   # data for each date time and their original text.
   findDateTimeExpressions: (text) ->
     matches = text.match(@dateTimeRegExp())
-    console.log(matches)
     return [] if matches is null
 
     @buildDateTimeObject(match) for match in matches
@@ -80,38 +79,63 @@ DecorateTime =
   buildDateTimeObject: (dateTimeString) ->
     split = @dateTimeRegExp().exec(dateTimeString)
 
-    console.log(split)
+    text  = split[0]
+    month = @findMonth(split[2], split[3])
+    date  = @findDate(split[2], split[3])
+    year  = @findYear(split[0])
+    start = @findStartHour(split[4])
+    end   = @findEndHour(split[4])
 
-    text:    split[0]
-    month:   @findMonth(split[2], split[3])
-    day:     @findDay(split[2], split[3])
-    year:    @findYear(split[0])
-    start:   @findStartHour(split[4])
-    end:     @findEndHour(split[4])
-    localStart: ->
-      new Date("#{@month} #{@day} #{@year} #{@start} UTC")
-    localEnd: ->
-      return null if @end is null
-      new Date("#{@month} #{@day} #{@year} #{@end} UTC")
+    startDate = new Date("#{month} #{date} #{year} #{start} UTC")
+    if end
+      endDate = new Date("#{month} #{date} #{year} #{end} UTC")
+    else
+      endDate = ""
+
+    text:      text
+    startDate: startDate
+    endDate:   endDate
+    utc:
+      month: month
+      date:  date
+      year:  year
+      start: start
+      end:   end
+    local:
+      month: @monthsLong[startDate.getMonth()]
+      date:  startDate.getDate().toString()
+      year:  startDate.getFullYear().toString()
+      start: @timeStringFromDate(startDate)
+      end:   @timeStringFromDate(endDate)
+
+  timeStringFromDate: (date) ->
+    return null if date is ""
+    hour    = date.getHours().toString()
+    minutes = date.getMinutes().toString()
+
+    if minutes.length is 1
+      minutes = "0" + minutes
+
+    "#{hour}:#{minutes}"
 
   # If the first one matches a short or long month, it means that the order
   # was 19 June, so we use that first value. Otherwise, it was June 19,
   # and we use the second.
-  findMonth: (firstMatch, secondMatch) ->
-    if firstMatch in @monthsLong or firstMatch in @monthsShort
-      firstMatch
+  findMonth: (possibleSource, otherPossibleSource) ->
+    if possibleSource in @monthsLong or possibleSource in @monthsShort
+      possibleSource
     else
-      secondMatch
+      otherPossibleSource
 
   # If the first one matches one or more digits, it means that the order
   # was 19 June, so we use that first value. Otherwise, it was June 19,
   # and we use the second.
-  findDay: (firstMatch, secondMatch) ->
-    matches = firstMatch.match(/\d+/)
+  findDate: (possibleSource, otherPossibleSource) ->
+    matches = possibleSource.match(/\d+/)
     if matches
-      firstMatch
+      possibleSource
     else
-      secondMatch
+      otherPossibleSource
 
   # Look in the fulltext for any substring of four consecutive digits, otherwise
   # use the current year.
