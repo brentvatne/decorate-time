@@ -9,9 +9,9 @@ with a data-attribute that will let you create a hover effect that
 presents the users local time.
 
 ```coffeescript
-  DecorateTime.eachIn $('p'), (dateTime) ->
-    start = dateTime.localStart().toString()
-    end   = dateTime.localEnd().toString()
+  DecorateTime.eachIn $('p'), (data) ->
+    start = data.startDate.toString()
+    end   = data.endDate.toString()
 
     "<span class='date-time' data-start='#{start}' data-end='#{end}'>#{dateTime.text}</span>"
 ```
