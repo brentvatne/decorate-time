@@ -4,13 +4,13 @@ describe 'DecorateTime', ->
   describe 'findDateTimeExpressions', ->
     it 'finds expressions beginning with a month', ->
       result = DecorateTime.findDateTimeExpressions(
-        'June 19 from 20:00 - 21:00 UTC'
+        'Monday, June 19 from 20:00 - 21:00 UTC'
       )
       expect(result.length).toEqual(1)
 
     it 'finds expressions beginning with a day', ->
       result = DecorateTime.findDateTimeExpressions(
-        '19 June from 20:00 - 21:00 UTC'
+        'Monday, 19 June from 20:00 - 21:00 UTC'
       )
       expect(result.length).toEqual(1)
 

@@ -1,13 +1,20 @@
 DecorateTime =
   monthsLong: [
-    'January', 'February', 'March', 'April', 'May',
-    'June', 'July', 'August', 'September', 'October',
-    'November', 'December'
+    'January', 'February', 'March', 'April', 'May', 'June', 'July',
+    'August', 'September', 'October', 'November', 'December'
   ]
 
   monthsShort: [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ]
+
+  daysLong: [
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+  ]
+
+  daysShort: [
+    'Mon', 'Tues', 'Weds', 'Thurs', 'Fri', 'Sat', 'Sun'
   ]
 
   # Finds each UTC date in the given elements and replaces it with the value 
@@ -46,13 +53,16 @@ DecorateTime =
   dateTimeRegExp: ->
     monthsLong  = @monthsLong.join("|")
     monthsShort = @monthsShort.join("|")
+    daysLong    = @daysLong.join("|")
+    daysShort   = @daysShort.join("|")
 
     ///
-      (#{monthsLong}|#{monthsShort}|\d+)  # It's either June 19
-      \s+                                 # or 19 June, and this
-      (#{monthsLong}|#{monthsShort}|\d+)  # handles both cases.
-      (.*?)                               # Any non-greedy match
-      (UTC)                               # Until UTC is found
+      (?:(#{daysLong}|#{daysShort}),\s+)? # First maybe a day comma space
+      (#{monthsLong}|#{monthsShort}|\d+)  # It's either June 19 or 19 June,
+      [,\s+]                              # and this handles both cases.
+      (#{monthsLong}|#{monthsShort}|\d+)  #
+      (.*?)                               # Any non-greedy match in between.
+      (UTC)                               # Until UTC is found.
     ///ig
 
   # Searches a block of text (eg: a paragraph) for any suitable date time
@@ -60,6 +70,7 @@ DecorateTime =
   # data for each date time and their original text.
   findDateTimeExpressions: (text) ->
     matches = text.match(@dateTimeRegExp())
+    console.log(matches)
     return [] if matches is null
 
     @buildDateTimeObject(match) for match in matches
@@ -69,54 +80,55 @@ DecorateTime =
   buildDateTimeObject: (dateTimeString) ->
     split = @dateTimeRegExp().exec(dateTimeString)
 
-    text:  split[0]
-    month: @findMonth(split)
-    day:   @findDay(split)
-    year:  @findYear(split)
-    start: @findStartHour(split)
-    end:   @findEndHour(split)
+    console.log(split)
+
+    text:    split[0]
+    month:   @findMonth(split[2], split[3])
+    day:     @findDay(split[2], split[3])
+    year:    @findYear(split[0])
+    start:   @findStartHour(split[4])
+    end:     @findEndHour(split[4])
     localStart: ->
       new Date("#{@month} #{@day} #{@year} #{@start} UTC")
     localEnd: ->
       return null if @end is null
       new Date("#{@month} #{@day} #{@year} #{@end} UTC")
 
-
   # If the first one matches a short or long month, it means that the order
   # was 19 June, so we use that first value. Otherwise, it was June 19,
   # and we use the second.
-  findMonth: (split) ->
-    if split[1] in @monthsLong or split[1] in @monthsShort
-      split[1]
+  findMonth: (firstMatch, secondMatch) ->
+    if firstMatch in @monthsLong or firstMatch in @monthsShort
+      firstMatch
     else
-      split[2]
+      secondMatch
 
   # If the first one matches one or more digits, it means that the order
   # was 19 June, so we use that first value. Otherwise, it was June 19,
   # and we use the second.
-  findDay: (split) ->
-    matches = split[1].match(/\d+/)
+  findDay: (firstMatch, secondMatch) ->
+    matches = firstMatch.match(/\d+/)
     if matches
-      split[1]
+      firstMatch
     else
-      split[2]
+      secondMatch
 
   # Look in the fulltext for any substring of four consecutive digits, otherwise
   # use the current year.
-  findYear: (split) ->
-    matches = split[0].match(/\d{4}/) || []
+  findYear: (fullText) ->
+    matches = fullText.match(/\d{4}/) || []
     matches[0] || @currentYear()
 
   # Look in the part in between June 19 and UTC a string like June 19 from
   # 20:00 to 21:00 UTC for the first occurrence of two digits:two digits.
-  findStartHour: (split) ->
-    matches = split[3].match(/\d+:\d+/)
+  findStartHour: (timePortion) ->
+    matches = timePortion.match(/\d+:\d+/)
     matches[0]
 
   # Look in the part in between June 19 and UTC a string like June 19 from
   # 20:00 to 21:00 UTC for the second occurrence of two digits:two digits.
-  findEndHour: (split) ->
-    matches = split[3].match(/\d+:\d+/g)
+  findEndHour: (timePortion) ->
+    matches = timePortion.match(/\d+:\d+/g)
     matches[1] || null
 
   # Returns the current year as a String
