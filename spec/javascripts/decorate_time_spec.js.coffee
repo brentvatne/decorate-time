@@ -66,6 +66,12 @@ describe 'DecorateTime', ->
 
         expect(result[0].utc.end).toEqual('21:00')
 
+      it 'sets the offset', ->
+        rangeSample = '19 June from 20:00 - 21:00 UTC'
+        result = DecorateTime.findDateTimeExpressions(rangeSample)
+
+        expect(result[0].local.offset.match(/UTC([-+])?\d+/)).toBeTruthy()
+
   describe 'eachIn', ->
     beforeEach ->
       $('#testArea').empty()

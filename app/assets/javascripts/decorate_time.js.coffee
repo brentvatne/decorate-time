@@ -87,10 +87,11 @@ DecorateTime =
     end   = @findEndHour(split[4])
 
     startDate = new Date("#{month} #{date} #{year} #{start} UTC")
+
     if end
       endDate = new Date("#{month} #{date} #{year} #{end} UTC")
     else
-      endDate = ""
+      endDate = ''
 
     text:      text
     startDate: startDate
@@ -102,14 +103,25 @@ DecorateTime =
       start: start
       end:   end
     local:
-      month: @monthsLong[startDate.getMonth()]
-      date:  startDate.getDate().toString()
-      year:  startDate.getFullYear().toString()
-      start: @timeStringFromDate(startDate)
-      end:   @timeStringFromDate(endDate)
+      month:  @monthsLong[startDate.getMonth()]
+      date:   startDate.getDate().toString()
+      year:   startDate.getFullYear().toString()
+      start:  @timeStringFromDate(startDate)
+      end:    @timeStringFromDate(endDate)
+      offset: @findLocalOffset()
 
+  # Gets the timezone offset from UTC and returns it as a String,
+  # for example 'UTC-7'
+  findLocalOffset: ->
+    offset = ((new Date).getTimezoneOffset() / 60) * -1
+    "UTC#{offset.toString()}"
+
+  # Creates a formatted time string from a given Date object, or null
+  # if the date is an empty string.
+  #
+  # Example: '10:03' (rather than '10:3')
   timeStringFromDate: (date) ->
-    return null if date is ""
+    return null if date is ''
     hour    = date.getHours().toString()
     minutes = date.getMinutes().toString()
 
