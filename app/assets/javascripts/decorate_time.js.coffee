@@ -30,7 +30,7 @@ DecorateTime =
 
         unless @alreadyReplaced(currentHtml, newText)
           newHtml = currentHtml.replace(
-            ///#{dateTime.text}///g, newText
+            ///#{dateTime.utc.text}///g, newText
           )
           element.html(newHtml)
 
@@ -77,38 +77,53 @@ DecorateTime =
   # Parses a date time string and returns an object with all of its properties,
   # month, day, year, etc, and also the original string in the text property.
   buildDateTimeObject: (dateTimeString) ->
+    utcData   = @extractUtcData(dateTimeString)
+    localData = @convertToLocalData(utcData)
+
+    utc:   utcData
+    local: localData
+
+  convertToLocalData: (utcData) ->
+    startDate = @initializeDate(utcData, utcData.start)
+    endDate   = @initializeDate(utcData, utcData.end)
+
+    month  = @monthsLong[startDate.getMonth()]
+    day    = @daysLong[startDate.getDay()]
+    date   = startDate.getDate().toString()
+    year   = startDate.getFullYear().toString()
+    start  = @timeStringFromDate(startDate)
+    end    = @timeStringFromDate(endDate)
+    offset = @findLocalOffset()
+
+    text = utcData.text
+    text = text.replace(utcData.day, day)
+    text = text.replace(utcData.date, date)
+    text = text.replace(utcData.month, month)
+    text = text.replace(utcData.start, start)
+    text = text.replace(utcData.end, end)
+    text = text.replace('UTC', offset)
+
+    text:   text
+    month:  month
+    date:   date
+    year:   year
+    start:  start
+    end:    end
+    offset: offset
+
+  initializeDate: (data, hour, timezone='UTC') ->
+    return '' if hour is null
+    new Date("#{data.month} #{data.date} #{data.year} #{hour} #{timezone}")
+
+  extractUtcData: (dateTimeString) ->
     split = @dateTimeRegExp().exec(dateTimeString)
 
-    text  = split[0]
-    month = @findMonth(split[2], split[3])
-    date  = @findDate(split[2], split[3])
-    year  = @findYear(split[0])
-    start = @findStartHour(split[4])
-    end   = @findEndHour(split[4])
-
-    startDate = new Date("#{month} #{date} #{year} #{start} UTC")
-
-    if end
-      endDate = new Date("#{month} #{date} #{year} #{end} UTC")
-    else
-      endDate = ''
-
-    text:      text
-    startDate: startDate
-    endDate:   endDate
-    utc:
-      month: month
-      date:  date
-      year:  year
-      start: start
-      end:   end
-    local:
-      month:  @monthsLong[startDate.getMonth()]
-      date:   startDate.getDate().toString()
-      year:   startDate.getFullYear().toString()
-      start:  @timeStringFromDate(startDate)
-      end:    @timeStringFromDate(endDate)
-      offset: @findLocalOffset()
+    text:  split[0]
+    month: @findMonth(split[2], split[3])
+    date:  @findDate(split[2], split[3])
+    year:  @findYear(split[0])
+    start: @findStartHour(split[4])
+    end:   @findEndHour(split[4])
 
   # Gets the timezone offset from UTC and returns it as a String,
   # for example 'UTC-7'

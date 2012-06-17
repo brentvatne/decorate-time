@@ -42,7 +42,7 @@ describe 'DecorateTime', ->
         @result = DecorateTime.findDateTimeExpressions(@sample)
 
       it 'sets the text property to the full match', ->
-        expect(@result[0].text).toEqual(@sample)
+        expect(@result[0].utc.text).toEqual(@sample)
 
       it 'sets the year to the current year if not given', ->
         expect(@result[0].utc.year).toEqual('2012')
@@ -71,6 +71,49 @@ describe 'DecorateTime', ->
         result = DecorateTime.findDateTimeExpressions(rangeSample)
 
         expect(result[0].local.offset.match(/UTC([-+])?\d+/)).toBeTruthy()
+
+      it 'keeps the day in the same format', ->
+        'pending - Friday should stay as Friday, Fri should be Fri'
+
+      it 'keeps the month in the same format', ->
+        'pending - see above'
+
+      describe 'local.text', ->
+        # this only works with timezone UTC-X
+        # not sure how to stub the timezone with js
+        beforeEach ->
+          rangeSample = 'Friday June 1st from 00:00 - 21:00 UTC'
+          @result = DecorateTime.findDateTimeExpressions(rangeSample)[0]
+          @local  = @result.local
+
+        it 'replaces the day', ->
+          expect(@local.text.match(@local.day)).toBeTruthy()
+
+        it 'replaces the date', ->
+          expect(@local.text.match(/31st/)).toBeTruthy()
+
+        it 'adds the correct suffix to the date', ->
+          rangeSample = 'Saturday June 2nd from 00:00 - 21:00 UTC'
+          local = DecorateTime.findDateTimeExpressions(rangeSample)[0].local
+          expect(@local.text.match(/1st/)).toBeTruthy()
+
+          rangeSample = 'Monday June 4th from 00:00 - 21:00 UTC'
+          local = DecorateTime.findDateTimeExpressions(rangeSample)[0].local
+          expect(@local.text.match(/3rd/)).toBeTruthy()
+
+        it 'replaces the offset', ->
+          expect(@local.text.match(@local.offset)).toBeTruthy()
+
+        it 'replaces the month', ->
+          expect(@local.text.match(@local.month)).toBeTruthy()
+
+        it 'replaces the start time', ->
+          expect(@local.text.match(@local.start)).toBeTruthy()
+
+        it 'replaces the end time', ->
+          expect(@local.text.match(@local.end)).toBeTruthy()
+          console.log(@result.utc.text)
+          console.log(@local.text)
 
   describe 'eachIn', ->
     beforeEach ->
@@ -105,11 +148,8 @@ describe 'DecorateTime', ->
 
     describe 'like in the README', ->
       beforeEach ->
-        DecorateTime.eachIn $('p'), (dateTime) ->
-          start = dateTime.startDate.toString()
-          end   = dateTime.endDate.toString()
-
-          "<span>#{dateTime.text}</span>"
+        DecorateTime.eachIn $('#testArea p'), (dateTime) ->
+          "<span>#{dateTime.utc.text}</span>"
 
       it 'works like it says in the README', ->
         paragraph = $('#testArea p').first().html()
