@@ -140,6 +140,9 @@ DecorateTime =
     hour    = date.getHours().toString()
     minutes = date.getMinutes().toString()
 
+    if hour.length is 1
+      hour = "0" + hour
+
     if minutes.length is 1
       minutes = "0" + minutes
 
