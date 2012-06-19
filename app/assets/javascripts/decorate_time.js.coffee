@@ -1,7 +1,8 @@
 DecorateTime =
   monthsLong: [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July',
-    'August', 'September', 'October', 'November', 'December'
+    'January', 'February', 'March', 'April',
+    'May', 'June', 'July', 'August', 'September',
+    'October', 'November', 'December'
   ]
 
   monthsShort: [
@@ -10,12 +11,39 @@ DecorateTime =
   ]
 
   daysLong: [
-    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+    'Friday', 'Saturday', 'Sunday'
   ]
 
   daysShort: [
     'Mon', 'Tues', 'Weds', 'Thurs', 'Fri', 'Sat', 'Sun'
   ]
+
+  # Matches strings such as:
+  #
+  # 19 June from 20:00 - 21:00 UTC
+  # June 19 at 20:00 UTC
+  # June 19 from 21:00 to 23:00 UTC
+  # 20:00 UTC
+  #
+  # Must contain UTC at the end of the string to match.
+  dateTimeRegExp: ->
+    monthsLong  = @monthsLong.join("|")
+    monthsShort = @monthsShort.join("|")
+    daysLong    = @daysLong.join("|")
+    daysShort   = @daysShort.join("|")
+    time        = "(\\d+:\\d+)"
+
+    ///
+      (?:(?:(#{daysLong}|#{daysShort}),\s+)? # Friday | Fri, space
+      (#{monthsLong}|#{monthsShort}|\d+)  # June | Jun | 10
+      (?:[,\s+])?                         # , space
+      (#{monthsLong}|#{monthsShort}|\d+)  # June | Jun | 10
+      (?:[^\d]+))?                           # from | between | at .. etc
+      (#{time}(?:.*?)#{time}?)              # 12:00 - 14:00 between 13:00 to 15:00
+      \s+                                 # One or more spaces
+      (UTC)                               # Until UTC is found.
+    ///ig
 
   # Finds each UTC date in the given elements and replaces it with the value 
   # returned from callback(the date time object)
@@ -43,28 +71,6 @@ DecorateTime =
   alreadyReplaced: (html, text) ->
     html.indexOf(text) > 0
 
-  # Matches strings such as:
-  #
-  # 19 June from 20:00 - 21:00 UTC
-  # June 19 at 20:00 UTC
-  # June 19 from 21:00 to 23:00 UTC
-  #
-  # Must contain UTC at the end of the string to match.
-  dateTimeRegExp: ->
-    monthsLong  = @monthsLong.join("|")
-    monthsShort = @monthsShort.join("|")
-    daysLong    = @daysLong.join("|")
-    daysShort   = @daysShort.join("|")
-
-    ///
-      (?:(#{daysLong}|#{daysShort}),\s+)? # First maybe a day comma space
-      (#{monthsLong}|#{monthsShort}|\d+)  # It's either June 19 or 19 June,
-      [,\s+]                              # and this handles both cases.
-      (#{monthsLong}|#{monthsShort}|\d+)  #
-      (.*?)                               # Any non-greedy match in between.
-      (UTC)                               # Until UTC is found.
-    ///ig
-
   # Searches a block of text (eg: a paragraph) for any suitable date time
   # strings. It then returns an Array of objects containing the parsed
   # data for each date time and their original text.
@@ -83,6 +89,20 @@ DecorateTime =
     utc:   utcData
     local: localData
 
+  extractUtcData: (dateTimeString) ->
+    split = @dateTimeRegExp().exec(dateTimeString)
+    console.log split
+
+    data =
+      text:  dateTimeString
+      month: @findMonth(split[2], split[3])
+      date:  @findDate(split[2], split[3])
+      year:  @findYear(split[0])
+      start: @findStartHour(split[4])
+      end:   @findEndHour(split[4])
+
+    @sanitizeData(data)
+
   convertToLocalData: (utcData) ->
     startDate = @initializeDate(utcData, utcData.start)
     endDate   = @initializeDate(utcData, utcData.end)
@@ -95,13 +115,12 @@ DecorateTime =
     end    = @timeStringFromDate(endDate)
     offset = @findLocalOffset()
 
-    text = utcData.text
-    text = text.replace(utcData.day, day)
-    text = text.replace(utcData.date, date)
-    text = text.replace(utcData.month, month)
-    text = text.replace(utcData.start, start)
-    text = text.replace(utcData.end, end)
-    text = text.replace('UTC', offset)
+    text = utcData.text.replace(utcData.day, day).
+                        replace(utcData.date, date).
+                        replace(utcData.month, month).
+                        replace(utcData.start, start).
+                        replace(utcData.end, end).
+                        replace('UTC', offset)
 
     text:   text
     month:  month
@@ -111,19 +130,18 @@ DecorateTime =
     end:    end
     offset: offset
 
+  sanitizeData: (data) ->
+    if data.month is undefined
+      data.month = @monthsLong[@currentMonth()]
+      data.date  = @currentDate()
+      data.year  = @currentYear()
+
+    data
+
   initializeDate: (data, hour, timezone='UTC') ->
     return '' if hour is null
+
     new Date("#{data.month} #{data.date} #{data.year} #{hour} #{timezone}")
-
-  extractUtcData: (dateTimeString) ->
-    split = @dateTimeRegExp().exec(dateTimeString)
-
-    text:  split[0]
-    month: @findMonth(split[2], split[3])
-    date:  @findDate(split[2], split[3])
-    year:  @findYear(split[0])
-    start: @findStartHour(split[4])
-    end:   @findEndHour(split[4])
 
   # Gets the timezone offset from UTC and returns it as a String,
   # for example 'UTC-7'
@@ -160,7 +178,7 @@ DecorateTime =
   # If the first one matches one or more digits, it means that the order
   # was 19 June, so we use that first value. Otherwise, it was June 19,
   # and we use the second.
-  findDate: (possibleSource, otherPossibleSource) ->
+  findDate: (possibleSource='', otherPossibleSource='') ->
     matches = possibleSource.match(/\d+/)
     if matches
       possibleSource
@@ -188,5 +206,13 @@ DecorateTime =
   # Returns the current year as a String
   currentYear: ->
     (new Date).getFullYear().toString()
+
+  # Returns the current month as a String
+  currentMonth: ->
+    (new Date).getMonth().toString()
+
+  # Returns the current date as a String
+  currentDate: ->
+    (new Date).getDate().toString()
 
 window.DecorateTime = DecorateTime
