@@ -36,13 +36,13 @@ DecorateTime =
 
     ///
       (?:(?:(#{daysLong}|#{daysShort}),\s+)? # Friday | Fri, space
-      (#{monthsLong}|#{monthsShort}|\d+)  # June | Jun | 10
-      (?:[,\s+])?                         # , space
-      (#{monthsLong}|#{monthsShort}|\d+)  # June | Jun | 10
+      (#{monthsLong}|#{monthsShort}|\d+)     # June | Jun | 10
+      (?:[,\s+])?                            # , space
+      (#{monthsLong}|#{monthsShort}|\d+)     # June | Jun | 10
       (?:[^\d]+))?                           # from | between | at .. etc
-      (#{time}(?:.*?)#{time}?)              # 12:00 - 14:00 between 13:00 to 15:00
-      \s+                                 # One or more spaces
-      (UTC)                               # Until UTC is found.
+      (#{time}(?:.*?)#{time}?)               # 12:00 - 14:00 between 13:00 to 15:00
+      \s+                                    # One or more spaces
+      (UTC)                                  # Until UTC is found.
     ///ig
 
   # Finds each UTC date in the given elements and replaces it with the value 
